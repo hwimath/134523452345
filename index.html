@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>단어 학습 퀴즈 게임</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background-color: #f0f8ff;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #ff69b4;
+        }
+        #lesson-selection, #content, #quiz, #results {
+            display: none;
+        }
+        .word-card {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #ff4500;
+        }
+        .example-sentences {
+            margin-bottom: 20px;
+            text-align: left;
+            display: inline-block;
+            text-align: left;
+        }
+        .quiz-options {
+            list-style-type: none;
+            padding: 0;
+            display: inline-block;
+            text-align: left;
+        }
+        .quiz-options li {
+            margin-bottom: 10px;
+        }
+        .quiz-options button {
+            background-color: #ffdab9;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+        .quiz-options button:hover {
+            background-color: #ffb6c1;
+        }
+        .hidden {
+            display: none;
+        }
+        .result {
+            font-size: 24px;
+            margin-top: 20px;
+        }
+        .correct {
+            color: #32cd32;
+        }
+        .incorrect {
+            color: #dc143c;
+        }
+        button {
+            background-color: #add8e6;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+        button:hover {
+            background-color: #87cefa;
+        }
+        input[type="text"] {
+            padding: 10px;
+            font-size: 18px;
+            border-radius: 10px;
+            border: 2px solid #87cefa;
+            width: 80%;
+            max-width: 300px;
+        }
+        #feedback {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🌟 단어 학습 퀴즈 게임 🌟</h1>
+
+<div id="lesson-selection">
+    <h2>레슨을 선택하세요</h2>
+    <ul id="lesson-list"></ul>
+</div>
+
+<div id="content">
+    <div id="word-display">
+        <div class="word-card">
+            <span id="english-word"></span> - <span id="korean-meaning"></span>
+        </div>
+        <button id="show-examples">예문 보기</button>
+    </div>
+    <div id="examples" class="hidden">
+        <h3>예문:</h3>
+        <ul id="example-sentences" class="example-sentences"></ul>
+        <button id="next-word">다음 단어</button>
+    </div>
+</div>
+
+<div id="quiz">
+    <h2 id="quiz-type"></h2>
+    <div id="quiz-question"></div>
+    <ul id="quiz-options" class="quiz-options"></ul>
+    <div id="quiz-input" class="hidden">
+        <input type="text" id="user-input" placeholder="정답을 입력하세요">
+        <button id="submit-answer">제출</button>
+    </div>
+    <div id="feedback" class="result"></div>
+</div>
+
+<div id="results">
+    <h2>결과</h2>
+    <p>총 문제 수: <span id="total-questions"></span></p>
+    <p>틀린 문제 수: <span id="incorrect-answers"></span></p>
+    <button onclick="location.reload()">다시 시작</button>
+</div>
+
+<script>
+    // 데이터 구조 정의
+    const lessons = {
+        '레슨1': [
+            {
+                english: 'flower',
+                korean: '꽃',
+                examples: [
+                    'The flower smells sweet.',
+                    'She gave her mom a beautiful flower.',
+                    'Bees love the flower in the garden.'
+                ]
+            },
+            {
+                english: 'squirrel',
+                korean: '다람쥐',
+                examples: [
+                    'The squirrel climbs the tree.',
+                    'I saw a squirrel eating nuts.',
+                    'Squirrels have fluffy tails.'
+                ]
+            },
+            {
+                english: 'nut',
+                korean: '견과',
+                examples: [
+                    'I like to eat a nut for a snack.',
+                    'The squirrel is hiding a nut.',
+                    'He cracked the nut open.'
+                ]
+            },
+            {
+                english: 'noise',
+                korean: '소음',
+                examples: [
+                    'The loud noise scared the cat.',
+                    'Please be quiet; too much noise!',
+                    'I heard a strange noise outside.'
+                ]
+            },
+            {
+                english: 'hole',
+                korean: '구멍',
+                examples: [
+                    'There is a hole in my sock.',
+                    'The rabbit went into the hole.',
+                    'We dug a hole in the sand.'
+                ]
+            },
+            {
+                english: 'pick',
+                korean: '(꽃을) 꺾다',
+                examples: [
+                    'Let’s pick flowers in the field.',
+                    'She wants to pick the red rose.',
+                    'Do not pick the neighbor’s flowers.'
+                ]
+            },
+            {
+                english: 'gather',
+                korean: '모으다',
+                examples: [
+                    'They gather shells on the beach.',
+                    'Let’s gather sticks for the fire.',
+                    'We gather together every weekend.'
+                ]
+            },
+            {
+                english: 'high',
+                korean: '높은',
+                examples: [
+                    'The bird is flying high.',
+                    'That is a high mountain.',
+                    'He can jump high.'
+                ]
+            }
+        ],
+        // ... [레슨2부터 레슨8까지 같은 형식으로 작성]
+        // 생략된 레슨 데이터는 아래에서 계속됩니다.
+        '레슨2': [
+            {
+                english: 'dig',
+                korean: '파다',
+                examples: [
+                    'The dog likes to dig holes.',
+                    'Let’s dig for treasure!',
+                    'They dig in the garden.'
+                ]
+            },
+            {
+                english: 'hear',
+                korean: '듣다',
+                examples: [
+                    'Can you hear the music?',
+                    'I hear a bird singing.',
+                    'She cannot hear without her hearing aid.'
+                ]
+            },
+            {
+                english: 'hop',
+                korean: '깡충 뛰다',
+                examples: [
+                    'The rabbit can hop fast.',
+                    'Let’s hop like frogs!',
+                    'Birds hop on the ground.'
+                ]
+            },
+            {
+                english: 'find',
+                korean: '찾다',
+                examples: [
+                    'Help me find my lost toy.',
+                    'Did you find the answer?',
+                    'They find a secret door.'
+                ]
+            },
+            {
+                english: 'leave',
+                korean: '떠나다',
+                examples: [
+                    'It’s time to leave for school.',
+                    'Don’t leave me alone.',
+                    'We will leave at noon.'
+                ]
+            },
+            {
+                english: 'large',
+                korean: '크다',
+                examples: [
+                    'That is a large pizza!',
+                    'Elephants are large animals.',
+                    'She has a large doll collection.'
+                ]
+            },
+            {
+                english: 'safe',
+                korean: '안전한',
+                examples: [
+                    'The children are safe at home.',
+                    'Wear a helmet to be safe.',
+                    'This is a safe place to play.'
+                ]
+            }
+        ],
+        // 계속해서 레슨3부터 레슨8까지 동일하게 작성합니다.
+        '레슨3': [
+            {
+                english: 'owner',
+                korean: '주인',
+                examples: [
+                    'The dog waits for its owner.',
+                    'Are you the owner of this bike?',
+                    'The shop owner is friendly.'
+                ]
+            },
+            {
+                english: 'home',
+                korean: '집',
+                examples: [
+                    'Welcome to my home.',
+                    'He went home after school.',
+                    'Home is where the heart is.'
+                ]
+            },
+            {
+                english: 'apartment',
+                korean: '아파트',
+                examples: [
+                    'They live in an apartment.',
+                    'Our apartment is on the fifth floor.',
+                    'The apartment has a nice view.'
+                ]
+            },
+            {
+                english: 'follow',
+                korean: '따라가다',
+                examples:
+                [
+                    'Please follow me.',
+                    'The puppy will follow you.',
+                    'Let’s follow the map.'
+                ]
+            },
+            {
+                english: 'lost',
+                korean: '(길을) 잃은',
+                examples: [
+                    'I am lost in the park.',
+                    'She found her lost cat.',
+                    'He feels lost without his friend.'
+                ]
+            },
+            {
+                english: 'sad',
+                korean: '슬픈',
+                examples: [
+                    'She is sad about the news.',
+                    'The movie was sad.',
+                    'Don’t be sad; cheer up!'
+                ]
+            },
+            {
+                english: 'lonely',
+                korean: '외로운',
+                examples: [
+                    'He feels lonely in the new town.',
+                    'Sometimes I get lonely at night.',
+                    'A lonely bird sings.'
+                ]
+            }
+        ],
+        // 레슨4부터 레슨8까지 동일하게 단어와 예문을 작성합니다.
+        '레슨4': [
+            {
+                english: 'townhouse',
+                korean: '연립주택',
+                examples: [
+                    'They moved into a townhouse.',
+                    'The townhouse has three floors.',
+                    'Our townhouse is near the park.'
+                ]
+            },
+            {
+                english: 'cookie',
+                korean: '쿠키',
+                examples: [
+                    'She baked chocolate chip cookies.',
+                    'Can I have a cookie?',
+                    'The cookie jar is empty.'
+                ]
+            },
+            {
+                english: 'arrive',
+                korean: '도착하다',
+                examples: [
+                    'We will arrive soon.',
+                    'They arrive at school early.',
+                    'When did you arrive?'
+                ]
+            },
+            {
+                english: 'plant',
+                korean: '(식물을) 심다',
+                examples: [
+                    'Let’s plant flowers in the garden.',
+                    'They plant seeds in the soil.',
+                    'She likes to plant trees.'
+                ]
+            },
+            {
+                english: 'walk',
+                korean: '걷다',
+                examples: [
+                    'Let’s walk to the store.',
+                    'He can walk fast.',
+                    'They walk in the park every day.'
+                ]
+            },
+            {
+                english: 'hug',
+                korean: '껴안다',
+                examples: [
+                    'She gave her mom a big hug.',
+                    'Hugs make me happy.',
+                    'They hug each other.'
+                ]
+            },
+            {
+                english: 'come',
+                korean: '오다',
+                examples: [
+                    'Please come to my party.',
+                    'He will come tomorrow.',
+                    'Can you come with me?'
+                ]
+            },
+            {
+                english: 'happy',
+                korean: '행복한',
+                examples: [
+                    'She feels happy today.',
+                    'The song makes me happy.',
+                    'Happy birthday to you!'
+                ]
+            }
+        ],
+        '레슨5': [
+            {
+                english: 'car',
+                korean: '자동차',
+                examples: [
+                    'They drive a blue car.',
+                    'The car is parked outside.',
+                    'She washes the car every week.'
+                ]
+            },
+            {
+                english: 'parking lot',
+                korean: '주차장',
+                examples: [
+                    'The parking lot is full.',
+                    'We left the car in the parking lot.',
+                    'Let’s meet at the parking lot.'
+                ]
+            },
+            {
+                english: 'school',
+                korean: '학교',
+                examples: [
+                    'We go to school together.',
+                    'School starts at 8 AM.',
+                    'She loves her school.'
+                ]
+            },
+            {
+                english: 'shoulder',
+                korean: '어깨',
+                examples: [
+                    'He carried the bag on his shoulder.',
+                    'She tapped me on the shoulder.',
+                    'My shoulder hurts.'
+                ]
+            },
+            {
+                english: 'stand',
+                korean: '서있다',
+                examples: [
+                    'Please stand up.',
+                    'They stand in a line.',
+                    'He can stand on one foot.'
+                ]
+            },
+            {
+                english: 'tap',
+                korean: '톡톡 치다',
+                examples: [
+                    'She taps the drum softly.',
+                    'Tap the screen to start.',
+                    'He taps his foot to the music.'
+                ]
+            },
+            {
+                english: 'huge',
+                korean: '거대한',
+                examples: [
+                    'The elephant is huge.',
+                    'They saw a huge ship.',
+                    'That’s a huge sandwich!'
+                ]
+            },
+            {
+                english: 'first',
+                korean: '첫 번째의',
+                examples: [
+                    'She won first prize.',
+                    'This is my first time here.',
+                    'He finished first in the race.'
+                ]
+            }
+        ],
+        '레슨6': [
+            {
+                english: 'office',
+                korean: '사무실',
+                examples: [
+                    'My mom works in an office.',
+                    'The office is on the third floor.',
+                    'He went to the office for a meeting.'
+                ]
+            },
+            {
+                english: 'morning',
+                korean: '아침',
+                examples: [
+                    'Good morning!',
+                    'She jogs every morning.',
+                    'The sun rises in the morning.'
+                ]
+            },
+            {
+                english: 'teacher',
+                korean: '선생님',
+                examples: [
+                    'Our teacher is kind.',
+                    'I gave my teacher an apple.',
+                    'She wants to be a teacher.'
+                ]
+            },
+            {
+                english: 'bulletin board',
+                korean: '게시판',
+                examples: [
+                    'Look at the bulletin board for news.',
+                    'They pinned a notice on the bulletin board.',
+                    'The bulletin board is full of pictures.'
+                ]
+            },
+            {
+                english: 'student',
+                korean: '학생',
+                examples: [
+                    'She is a good student.',
+                    'The students are in the classroom.',
+                    'He helps other students.'
+                ]
+            },
+            {
+                english: 'name',
+                korean: '이름',
+                examples: [
+                    'What is your name?',
+                    'She wrote her name on the paper.',
+                    'They called his name.'
+                ]
+            },
+            {
+                english: 'inside',
+                korean: '안으로',
+                examples: [
+                    'Let’s go inside.',
+                    'The cat is inside the box.',
+                    'He looked inside the bag.'
+                ]
+            }
+        ],
+        '레슨7': [
+            {
+                english: 'classroom',
+                korean: '교실',
+                examples: [
+                    'Our classroom is big.',
+                    'They are decorating the classroom.',
+                    'Please be quiet in the classroom.'
+                ]
+            },
+            {
+                english: 'library',
+                korean: '도서관',
+                examples: [
+                    'She borrowed a book from the library.',
+                    'The library is open today.',
+                    'We study at the library.'
+                ]
+            },
+            {
+                english: 'science',
+                korean: '과학',
+                examples: [
+                    'Science is my favorite subject.',
+                    'They did a science experiment.',
+                    'He is reading a science book.'
+                ]
+            },
+            {
+                english: 'lab',
+                korean: '실험실',
+                examples: [
+                    'We wear goggles in the lab.',
+                    'The lab is full of equipment.',
+                    'She works in a science lab.'
+                ]
+            },
+            {
+                english: 'rule',
+                korean: '규칙',
+                examples: [
+                    'Follow the rules.',
+                    'No running is a school rule.',
+                    'They learned the game rules.'
+                ]
+            },
+            {
+                english: 'pass',
+                korean: '지나가다',
+                examples: [
+                    'Let’s pass through the gate.',
+                    'The bus will pass soon.',
+                    'They pass by the shop every day.'
+                ]
+            },
+            {
+                english: 'near',
+                korean: '가까운',
+                examples: [
+                    'The park is near my house.',
+                    'She sits near the window.',
+                    'We are near the finish line.'
+                ]
+            }
+        ],
+        '레슨8': [
+            {
+                english: 'book',
+                korean: '책',
+                examples: [
+                    'I am reading a fun book.',
+                    'She wrote a book.',
+                    'Books are on the shelf.'
+                ]
+            },
+            {
+                english: 'student card',
+                korean: '학생증',
+                examples: [
+                    'Show your student card.',
+                    'He lost his student card.',
+                    'The student card has her photo.'
+                ]
+            },
+            {
+                english: 'name tag',
+                korean: '이름표',
+                examples: [
+                    'She wears a name tag.',
+                    'The name tag says "Kim".',
+                    'Make a name tag for the party.'
+                ]
+            },
+            {
+                english: 'uncle',
+                korean: '삼촌',
+                examples: [
+                    'My uncle visits us.',
+                    'He is my favorite uncle.',
+                    'Uncle Bob tells funny stories.'
+                ]
+            },
+            {
+                english: 'borrow',
+                korean: '빌리다',
+                examples: [
+                    'Can I borrow your pencil?',
+                    'She will borrow a book.',
+                    'They borrow games from the library.'
+                ]
+            },
+            {
+                english: 'need',
+                korean: '필요하다',
+                examples: [
+                    'I need some help.',
+                    'Do you need anything?',
+                    'We need to hurry.'
+                ]
+            }
+        ]
+    };
+
+    let selectedLesson = null;
+    let wordIndex = 0;
+    let phase = 0;
+    let quizData = [];
+    let totalQuestions = 0;
+    let incorrectAnswers = 0;
+
+    // 레슨 리스트 생성
+    const lessonList = document.getElementById('lesson-list');
+    for (let lesson in lessons) {
+        const li = document.createElement('li');
+        const button = document.createElement('button');
+        button.textContent = lesson;
+        button.onclick = () => startLesson(lesson);
+        li.appendChild(button);
+        lessonList.appendChild(li);
+    }
+    document.getElementById('lesson-selection').style.display = 'block';
+
+    function startLesson(lesson) {
+        selectedLesson = lessons[lesson];
+        wordIndex = 0;
+        phase = 0;
+        document.getElementById('lesson-selection').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+        showWord();
+    }
+
+    function showWord() {
+        const word = selectedLesson[wordIndex];
+        document.getElementById('english-word').textContent = word.english;
+        document.getElementById('korean-meaning').textContent = word.korean;
+        document.getElementById('examples').classList.add('hidden');
+    }
+
+    document.getElementById('show-examples').onclick = function() {
+        const word = selectedLesson[wordIndex];
+        const examples = word.examples;
+        const exampleList = document.getElementById('example-sentences');
+        exampleList.innerHTML = '';
+        examples.forEach(sentence => {
+            const li = document.createElement('li');
+            li.textContent = sentence;
+            exampleList.appendChild(li);
+        });
+        document.getElementById('examples').classList.remove('hidden');
+    };
+
+    document.getElementById('next-word').onclick = function() {
+        wordIndex++;
+        if (wordIndex < selectedLesson.length) {
+            showWord();
+        } else {
+            document.getElementById('content').style.display = 'none';
+            startQuiz();
+        }
+    };
+
+    function startQuiz() {
+        phase++;
+        wordIndex = 0;
+        if (phase === 1) {
+            quizData = selectedLesson.slice();
+            shuffleArray(quizData);
+            document.getElementById('quiz-type').textContent = '📝 영단어를 보고 뜻을 고르세요.';
+            nextQuizQuestion();
+        } else if (phase === 2) {
+            quizData = selectedLesson.slice();
+            shuffleArray(quizData);
+            document.getElementById('quiz-type').textContent = '📝 뜻을 보고 영단어를 고르세요.';
+            nextQuizQuestion();
+        } else if (phase === 3) {
+            quizData = selectedLesson.slice();
+            shuffleArray(quizData);
+            document.getElementById('quiz-type').textContent = '📝 단어의 철자를 완성하세요.';
+            nextSpellingQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function nextQuizQuestion() {
+        if (wordIndex < quizData.length) {
+            const word = quizData[wordIndex];
+            totalQuestions++;
+            document.getElementById('quiz-question').textContent = phase === 1 ? word.english : word.korean;
+            const options = generateOptions(word);
+            const optionsList = document.getElementById('quiz-options');
+            optionsList.innerHTML = '';
+            options.forEach(option => {
+                const li = document.createElement('li');
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.onclick = () => checkAnswer(option, word);
+                li.appendChild(button);
+                optionsList.appendChild(li);
+            });
+            document.getElementById('quiz-input').classList.add('hidden');
+            document.getElementById('quiz-options').classList.remove('hidden');
+            document.getElementById('quiz').style.display = 'block';
+        } else {
+            startQuiz();
+        }
+    }
+
+    function checkAnswer(selected, word) {
+        const isCorrect = (phase === 1 && selected === word.korean) || (phase === 2 && selected === word.english);
+        const feedback = document.getElementById('feedback');
+        if (isCorrect) {
+            feedback.textContent = '🌟 정답입니다! 🌟';
+            feedback.className = 'result correct';
+        } else {
+            feedback.textContent = '😢 오답입니다.';
+            feedback.className = 'result incorrect';
+            incorrectAnswers++;
+        }
+        wordIndex++;
+        setTimeout(() => {
+            feedback.textContent = '';
+            nextQuizQuestion();
+        }, 1000);
+    }
+
+    function generateOptions(correctWord) {
+        const options = [];
+        options.push(phase === 1 ? correctWord.korean : correctWord.english);
+        while (options.length < 4) {
+            const randomWord = selectedLesson[Math.floor(Math.random() * selectedLesson.length)];
+            const option = phase === 1 ? randomWord.korean : randomWord.english;
+            if (!options.includes(option)) {
+                options.push(option);
+            }
+        }
+        shuffleArray(options);
+        return options;
+    }
+
+    function nextSpellingQuestion() {
+        if (wordIndex < quizData.length) {
+            const word = quizData[wordIndex];
+            totalQuestions++;
+            document.getElementById('quiz-question').textContent = word.korean;
+            const maskedWord = maskWord(word.english);
+            document.getElementById('quiz-options').classList.add('hidden');
+            document.getElementById('quiz-input').classList.remove('hidden');
+            document.getElementById('user-input').value = '';
+            document.getElementById('user-input').placeholder = maskedWord;
+            document.getElementById('quiz').style.display = 'block';
+        } else {
+            startQuiz();
+        }
+    }
+
+    document.getElementById('submit-answer').onclick = function() {
+        const userAnswer = document.getElementById('user-input').value.trim();
+        const word = quizData[wordIndex];
+        const isCorrect = userAnswer.toLowerCase() === word.english.toLowerCase();
+        const feedback = document.getElementById('feedback');
+        if (isCorrect) {
+            feedback.textContent = '🌟 정답입니다! 🌟';
+            feedback.className = 'result correct';
+        } else {
+            feedback.textContent = `😢 오답입니다. 정답은 "${word.english}" 입니다.`;
+            feedback.className = 'result incorrect';
+            incorrectAnswers++;
+        }
+        wordIndex++;
+        setTimeout(() => {
+            feedback.textContent = '';
+            nextSpellingQuestion();
+        }, 2000);
+    };
+
+    function maskWord(word) {
+        const length = word.length;
+        const maskCount = Math.max(1, Math.floor(length / 2));
+        let maskedWord = word.split('');
+        let indices = [];
+        while (indices.length < maskCount) {
+            const index = Math.floor(Math.random() * length);
+            if (!indices.includes(index) && word[index] !== ' ') {
+                indices.push(index);
+                maskedWord[index] = '_';
+            }
+        }
+        return maskedWord.join('');
+    }
+
+    function showResults() {
+        document.getElementById('quiz').style.display = 'none';
+        document.getElementById('results').style.display = 'block';
+        document.getElementById('total-questions').textContent = totalQuestions;
+        document.getElementById('incorrect-answers').textContent = incorrectAnswers;
+    }
+
+    // 배열 섞기 함수
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+</script>
+
+</body>
+</html>
